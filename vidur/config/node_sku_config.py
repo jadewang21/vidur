@@ -60,3 +60,12 @@ class H100DgxNodeSKUConfig(BaseNodeSKUConfig):
     @staticmethod
     def get_type():
         return NodeSKUType.H100_DGX
+
+@dataclass
+class RTX3090IBNodeSKUConfig(BaseNodeSKUConfig):
+    device_sku_type: DeviceSKUType = DeviceSKUType.RTX3090
+    num_devices_per_node: int = 2
+
+    @staticmethod
+    def get_type():
+        return NodeSKUType.RTX3090_IB

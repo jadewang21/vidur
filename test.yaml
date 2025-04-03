@@ -1,0 +1,57 @@
+python -m vidur.main  \
+--replica_config_device a100 \
+--replica_config_model_name meta-llama/Meta-Llama-3-8B \
+--cluster_config_num_replicas 1 \
+--replica_config_tensor_parallel_size 1 \
+--replica_config_num_pipeline_stages 1 \
+--request_generator_config_type synthetic \
+--synthetic_request_generator_config_num_requests 512  \
+--length_generator_config_type trace \
+--trace_request_length_generator_config_max_tokens 16384 \
+--trace_request_length_generator_config_trace_file ./data/processed_traces/splitwise_conv.csv \
+--interval_generator_config_type poisson \
+--poisson_request_interval_generator_config_qps 6.45 \
+--replica_scheduler_config_type sarathi  \
+--sarathi_scheduler_config_batch_size_cap 512  \
+--sarathi_scheduler_config_chunk_size 512 \
+--random_forrest_execution_time_predictor_config_prediction_max_prefill_chunk_size 16384 \
+--random_forrest_execution_time_predictor_config_prediction_max_batch_size 512 \
+--random_forrest_execution_time_predictor_config_prediction_max_tokens_per_request 16384
+
+with self.get_timer(OperationMetrics.ATTN_KV_CACHE_SAVE, layer_id):
+    append_paged_kv_cache(
+        key,
+        value,
+        self.append_qo_indptr_tensor,
+        kv_cache,
+        self.append_kv_page_indices_tensor,
+        self.append_kv_page_indptr_tensor,
+        self.append_kv_last_page_len_tensor,
+        kv_layout="NHD",
+    )
+
+python -m vidur.main \
+  --replica_config_device rtx3090 \
+  --replica_config_network_device rtx3090_ib \
+  --replica_config_model_name meta-llama/Llama-2-7b-hf \
+  --cluster_config_num_replicas 1 \
+  --replica_config_tensor_parallel_size 1 \
+  --replica_config_num_pipeline_stages 1 \
+  --request_generator_config_type synthetic \
+  --synthetic_request_generator_config_num_requests 128 \
+  --length_generator_config_type trace \
+  --trace_request_length_generator_config_max_tokens 4096\
+  --trace_request_length_generator_config_trace_file ./data/processed_traces/splitwise_conv.csv \
+  --interval_generator_config_type poisson \
+  --poisson_request_interval_generator_config_qps 3 \
+  --replica_scheduler_config_type sarathi \
+  --sarathi_scheduler_config_batch_size_cap 128 \
+  --sarathi_scheduler_config_chunk_size 128 \
+  --random_forrest_execution_time_predictor_config_compute_input_file ./data/profiling/compute/rtx3090/meta-llama/Llama-2-7b-hf/mlp.csv \
+  --random_forrest_execution_time_predictor_config_attention_input_file ./data/profiling/compute/rtx3090/meta-llama/Llama-2-7b-hf/attention.csv \
+  --random_forrest_execution_time_predictor_config_all_reduce_input_file ./data/profiling/network/rtx3090_ib/all_reduce.csv \
+  --random_forrest_execution_time_predictor_config_send_recv_input_file ./data/profiling/network/rtx3090_ib/send_recv.csv
+
+
+
+    --replica_config_network_device rtx3090_ib \

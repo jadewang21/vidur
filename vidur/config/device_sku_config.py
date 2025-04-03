@@ -41,3 +41,13 @@ class H100DeviceSKUConfig(BaseDeviceSKUConfig):
     @staticmethod
     def get_type():
         return DeviceSKUType.H100
+
+
+@dataclass
+class RTX3090DeviceSKUConfig(BaseDeviceSKUConfig):
+    fp16_tflops: int = 71
+    total_memory_gb: int = 24
+
+    @staticmethod
+    def get_type():
+        return DeviceSKUType.RTX3090
