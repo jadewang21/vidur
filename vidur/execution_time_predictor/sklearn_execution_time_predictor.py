@@ -853,6 +853,7 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         prefill_params = self._get_batch_prefill_attention_params(batch)
 
         if len(prefill_params) == 0:
+            print("No prefill params, returning 0 for attn_prefill execution time")
             return 0
 
         kv_cache_sizes, prefill_chunk_sizes = zip(*prefill_params)
@@ -860,9 +861,15 @@ class SklearnExecutionTimePredictor(BaseExecutionTimePredictor):
         agg_kv_cache_size = sum(kv_cache_sizes)
         agg_prefill_chunk_size = sum([x**2 for x in prefill_chunk_sizes]) ** 0.5
 
-        return self._predictions["attn_prefill"][
-            (agg_kv_cache_size, round(agg_prefill_chunk_size) ** 2)
-        ] * (
+        key = (agg_kv_cache_size, round(agg_prefill_chunk_size) ** 2)
+        print(f"Batch info - kv_cache_sizes: {kv_cache_sizes}, prefill_chunk_sizes: {prefill_chunk_sizes}, key: {key}")
+
+        # Check for invalid key
+        if key not in self._predictions["attn_prefill"]:
+            print(f"Warning: Key {key} not found in attn_prefill predictions, returning 0")
+            return 0.0
+
+        return self._predictions["attn_prefill"][key] * (
             1
             + self._attention_prefill_batching_overhead_fraction
             * int(len(prefill_params) > 1)

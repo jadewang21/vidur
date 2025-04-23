@@ -84,6 +84,7 @@ class BatchStage(BaseEntity):
         self,
         time: float,
     ) -> None:
+        #print(f"BatchStage {self._id} scheduled, pipeline_stage: {self._pipeline_stage}")
         self._scheduled_at = time
         self._scheduled = True
 

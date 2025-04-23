@@ -50,6 +50,7 @@ TIME_STR_MS = "Time (ms)"
 class MetricsStore:
 
     def __init__(self, simulation_config: SimulationConfig) -> None:
+        
         self._simulation_config = simulation_config
         self._config = self._simulation_config.metrics_config
         self._last_request_arrived_at = None
@@ -59,7 +60,7 @@ class MetricsStore:
         self._num_pipeline_stages = (
             self._simulation_config.cluster_config.replica_config.num_pipeline_stages
         )
-
+        print(f"Number of pipeline stages: {self._num_pipeline_stages}")
         # Initialise request metrics
         self._request_metrics_time_distributions: Dict[
             RequestMetricsTimeDistributions, DataSeries

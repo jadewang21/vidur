@@ -1,23 +1,25 @@
 import logging
 from typing import Tuple
-
 import numpy as np
 import pandas as pd
-
 from vidur.config import TraceRequestLengthGeneratorConfig
-from vidur.request_generator.base_request_length_generator import (
-    BaseRequestLengthGenerator,
-)
+from vidur.request_generator.base_request_length_generator import BaseRequestLengthGenerator
 
 logger = logging.getLogger(__name__)
 
-
 class TraceRequestLengthGenerator(BaseRequestLengthGenerator):
-
     def __init__(self, config: TraceRequestLengthGeneratorConfig):
         super().__init__(config)
 
         self.trace_df = pd.read_csv(config.trace_file)
+        print("TraceRequestLengthGenerator - Before processing - First 5 rows of trace_df:")
+        print(self.trace_df.head())
+
+        # Ensure arrival_time is in datetime format and sort by arrival_time
+        self.trace_df["arrival_time"] = pd.to_datetime(self.trace_df["arrival_time"])
+        self.trace_df.sort_values(by="arrival_time", inplace=True)
+        print("TraceRequestLengthGenerator - After sorting by arrival_time - First 5 rows of trace_df:")
+        print(self.trace_df.head())
 
         # scale prefill and decode tokens
         self.trace_df["num_prefill_tokens"] = (
@@ -68,8 +70,10 @@ class TraceRequestLengthGenerator(BaseRequestLengthGenerator):
         )
 
         assert all(self.trace_df["num_prefill_tokens"] > 0)
-
         assert all(self.trace_df["num_decode_tokens"] > 0)
+
+        print("TraceRequestLengthGenerator - After processing - First 5 rows of trace_df:")
+        print(self.trace_df.head())
 
         # compute pd ratio and log the 25, 50, 75, 90, 95, 99 percentiles
         pd_ratio = (
@@ -83,8 +87,7 @@ class TraceRequestLengthGenerator(BaseRequestLengthGenerator):
         )
         logger.debug(f"Prompt/decode token ratio stats\n: {pd_distribution}")
 
-        # randomly shuffle the df based on the seed
-        self.trace_df = self.trace_df.sample(frac=1, random_state=self.config.seed)
+        # Removed random shuffling to maintain order
         self.next_request_idx = 0
 
     def get_next_num_tokens(self) -> Tuple[float, float]:
@@ -92,9 +95,9 @@ class TraceRequestLengthGenerator(BaseRequestLengthGenerator):
             return None, None
 
         row = self.trace_df.iloc[self.next_request_idx]
+        prefill_tokens = row["num_prefill_tokens"]
+        decode_tokens = row["num_decode_tokens"]
+        print(f"TraceRequestLengthGenerator - next_request_idx: {self.next_request_idx}, prefill_tokens: {prefill_tokens}, decode_tokens: {decode_tokens}")
         self.next_request_idx += 1
 
-        return (
-            row["num_prefill_tokens"],
-            row["num_decode_tokens"],
-        )
+        return prefill_tokens, decode_tokens

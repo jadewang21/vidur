@@ -10,9 +10,10 @@ from vidur.scheduler.replica_scheduler.replica_scheduler_registry import (
 
 
 class BaseGlobalScheduler(ABC):
-    def __init__(self, config: SimulationConfig, replicas: Dict[int, Replica]):
+    def __init__(self, config: SimulationConfig, replicas: Dict[int, Replica], simulator=None):
         self._config = config
         self._replicas = replicas
+        #self._simulator = simulator  # 存储 simulator
 
         self._num_replicas = len(self._replicas)
 
@@ -23,8 +24,10 @@ class BaseGlobalScheduler(ABC):
             replica_scheduler_config=config.cluster_config.replica_scheduler_config,
             metrics_config=config.metrics_config,
         )
+        print("this is replica schedule")
         self._replica_schedulers = {
             replica_id: ReplicaSchedulerRegistry.get(
+                
                 config.cluster_config.replica_scheduler_config.get_type(),
                 replica_config=config.cluster_config.replica_config,
                 replica_scheduler_config=config.cluster_config.replica_scheduler_config,
@@ -32,6 +35,8 @@ class BaseGlobalScheduler(ABC):
                 replica=replica,
                 num_stages=replica.num_pipeline_stages,
                 execution_time_predictor=execution_time_predictor,
+                #simulator=self._simulator,  # 传递 simulator
+                simulator=simulator,
             )
             for replica_id, replica in replicas.items()
         }

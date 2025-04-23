@@ -112,6 +112,7 @@ class SarathiReplicaScheduler(BaseReplicaScheduler):
                 continue
 
             while not self._can_allocate_request(request):
+                print("this is sarathi")
                 if self._preempted_requests:
                     victim_request = self._preempted_requests.pop(-1)
                     victim_request.restart()

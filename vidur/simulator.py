@@ -13,7 +13,6 @@ from vidur.scheduler import BaseGlobalScheduler, GlobalSchedulerRegistry
 
 logger = init_logger(__name__)
 
-
 class Simulator:
     def __init__(self, config: SimulationConfig) -> None:
         self._config: SimulationConfig = config
@@ -43,6 +42,7 @@ class Simulator:
             self._config.cluster_config.global_scheduler_config.get_type(),
             self._config,
             self._cluster.replicas,
+            simulator=self, # 传递 self 作为 simulator
         )
 
         self._init_event_queue()
@@ -63,8 +63,12 @@ class Simulator:
 
         while self._event_queue and not self._terminate:
             _, event = heapq.heappop(self._event_queue)
+            print(f"Processing event at time {event._time}, type: {type(event).__name__}")
             self._set_time(event._time)
             new_events = event.handle_event(self._scheduler, self._metric_store)
+            #logger.debug(f"Simulator time: {self._time}, Setting request {self._request.id} arrived_at to {self._time}")
+            if new_events:
+                print(f"New events generated: {[type(e).__name__ for e in new_events]}")
             self._add_events(new_events)
 
             if self._config.metrics_config.write_json_trace:
@@ -102,9 +106,14 @@ class Simulator:
 
     def _init_event_queue(self) -> None:
         requests = self._request_generator.generate()
+        logger.info(
+            f"Starting simulation with cluster: {self._cluster} and {len(requests)} requests"
+        )
 
         for request in requests:
+            print(f"Adding RequestArrivalEvent for request {request.id} at time {request.arrived_at}")
             self._add_event(RequestArrivalEvent(request.arrived_at, request))
+        print(f"Event queue initialized with {len(self._event_queue)} events")
 
     def _set_time(self, time: float) -> None:
         self._time = time

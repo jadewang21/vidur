@@ -24,12 +24,16 @@ class BaseReplicaScheduler(ABC):
         replica: Replica,
         num_stages: int,
         execution_time_predictor: BaseExecutionTimePredictor,
+        simulator=None, # 添加默认值 None 以保持向后兼容性（如果其他地方没传）
+        *args,          # 添加 *args
+        **kwargs,       # 添加 **kwargs
     ) -> None:
         self._config = replica_scheduler_config
         self._replica_config = replica_config
         self._request_generator_config = request_generator_config
         self._replica_id = replica.id
         self._num_stages = num_stages
+        self._simulator = simulator # 存储起来，如果 BaseReplicaScheduler 内部其他方法需要 simulator 时间的话
 
         self._max_blocks_per_sequence = (
             self._request_generator_config.max_tokens // self._config.block_size
@@ -43,10 +47,11 @@ class BaseReplicaScheduler(ABC):
             )
         self._max_batch_size = min(
             memory_planner.get_max_batch_size(),
-            self._config.batch_size_cap,
+            #self._config.batch_size_cap,
+            getattr(self._config, 'batch_size_cap', float('inf')), # 使用 getattr 提供默认值
         )
 
-        logger.debug(
+        print(
             f"Obtained max batch size of {self._max_batch_size} for replica {self._replica_id}"
         )
 
@@ -56,10 +61,11 @@ class BaseReplicaScheduler(ABC):
 
         self._replica_stage_schedulers = {
             stage_id: ReplicaStageScheduler(
-                replica.id,
-                stage_id,
-                stage_id == num_stages - 1,
-                execution_time_predictor,
+                replica_id=replica.id, # 使用 replica_id= 而不是直接 replica.id 提高可读性
+                stage_id=stage_id,
+                is_last_stage=(stage_id == num_stages - 1),
+                execution_time_predictor=execution_time_predictor,
+                simulator=simulator, # 将接收到的 simulator 传递下去
             )
             for stage_id in range(num_stages)
         }

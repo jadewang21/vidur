@@ -3,6 +3,8 @@ from typing import Tuple
 from vidur.entities.base_entity import BaseEntity
 from vidur.logger import init_logger
 
+import time
+
 logger = init_logger(__name__)
 
 
@@ -116,6 +118,9 @@ class Request(BaseEntity):
     @property
     @check_scheduled
     def e2e_time(self) -> float:
+        now_ms = int(time.time() * 1000)  # 当前时间，毫秒级整数
+        duration_ms = (self._completed_at - self._arrived_at) * 1000  # 时长，毫秒
+        print(f"now time(ms): {now_ms}, duration(ms): {duration_ms}")
         return self._completed_at - self._arrived_at
 
     @property
@@ -244,7 +249,7 @@ class Request(BaseEntity):
         if self._num_processed_tokens == self.total_tokens:
             self._completed_at = time
             self._completed = True
-            logger.debug(f"Request {self._id} completed at {self._completed_at}")
+            logger.debug(f"Simulator time: {time}, Request {self._id} completed. arrived_at={self._arrived_at}, e2e_time={self._completed_at - self._arrived_at}")
 
     def on_batch_stage_schedule(
         self,
